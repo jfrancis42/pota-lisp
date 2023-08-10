@@ -6,15 +6,24 @@ This library is still in development, but the basics are present. It's able to f
 For example to fetch current spots and cache them for use, try this:
 
 ```
-POTA> (defparameter *pota* (mapcar #'make-pota-spot (fetch-pota)))
-*POTA*
+POTA> (defparameter *spots* (mapcar #'make-pota-spot (fetch-pota)))
+*SPOTS*
 POTA> 
 ```
 
-You now have a list of objects representing the individual POTA spots. This is what a random spot looks like:
+You now have a list of objects representing the individual POTA spots. If you want to start a background thread that periodically fetches spots automatically (60 seconds by default, or specify as an optional parameter to (start-pota-thread), run this:
 
 ```
-POTA> (describe (second *pota*))
+POTA> (start-pota-thread)
+pota-thread is running...
+NIL
+POTA> 
+```
+
+This is what a random spot looks like:
+
+```
+POTA> (describe (nth 3 (bt:with-lock-held (*spots-lock*) *spots*)))
 #<POTA-SPOT {101FCE80B3}>
   [standard-object]
 
@@ -45,7 +54,7 @@ POTA>
 There are various functions and methods to view and manipulate this data. For example, if you specify your location, functions like pp will show you the distance and bearing to the spot:
 
 ```
-POTA> (pp (second *pota*))
+POTA> (pp (nth 3 (bt:with-lock-held (*spots-lock*) *spots*)))
 Activator: N2AKJ (14061.0/CW) @ 2023-07-13T19:56:19
 Park: K-2114/US-NY/Nissequogue River State Park
 Where: 1654.4 mi @ 76.1 deg FN30jv 40.9006/-73.2309
@@ -57,9 +66,9 @@ POTA>
 (dist ...) and (direction ...) are methods you can use yourself:
 
 ```
-POTA> (dist (second *pota*))
+POTA> (dist (nth 3 (bt:with-lock-held (*spots-lock*) *spots*)))
 1654.4366978084647d0
-POTA> (direction (second *pota*))
+POTA> (direction (nth 3 (bt:with-lock-held (*spots-lock*) *spots*)))
 76.1314063565838d0
 POTA> 
 ```
@@ -67,9 +76,9 @@ POTA>
 (filter-location ...) will only show you spots where the location field matches what you supply. and (dist-sort ...) will sort the returned list in ascending order of distance from your location:
 
 ```
-POTA> (filter-location "US-CO" *pota*)
+POTA> (filter-location "US-CO" (bt:with-lock-held (*spots-lock*) *spots*)
 (#<POTA-SPOT {101FCE86B3}> #<POTA-SPOT {101FCE8EF3}> #<POTA-SPOT {101FCE98B3}>)
-POTA> (mapcar #'pp (filter-location "US-CO" *pota*))
+POTA> (mapcar #'pp (filter-location "US-CO" *spots*))
 Activator: WW8L (14075/FT8) @ 2023-07-13T19:43:19
 Park: K-1210/US-CO/Boyd Lake State Park
 Where: 76.8 mi @ 345.2 deg DN70lk 40.4298/-105.045
@@ -83,7 +92,7 @@ Park: K-0226/US-CO/Rocky Mountain Arsenal National Wildlife Refuge
 Where: 34.4 mi @ 345.3 deg DM79nu 39.8367/-104.837
 
 (NIL NIL NIL)
-POTA> (mapcar #'pp (dist-sort (filter-location "US-CO" *pota*)))
+POTA> (mapcar #'pp (dist-sort (filter-location "US-CO" (bt:with-lock-held (*spots-lock*) *spots*)))
 Activator: K2JH (14326/SSB) @ 2023-07-13T19:44:43
 Park: K-0226/US-CO/Rocky Mountain Arsenal National Wildlife Refuge
 Where: 34.4 mi @ 345.3 deg DM79nu 39.8367/-104.837
@@ -101,19 +110,3 @@ POTA>
 ```
 
 That's about all I've implemented so far, but it's a solid foundation to build from. I anticipate subsequent versions of the code to implement automatic periodic fetching of the data and other useful goodies.
-
-## Update
-
-I need to re-work the docs. I added locking and a few new useful functions, but haven't had time to document any of this yet:
-
-````
-(bt:with-lock-held (*spots-lock*) (mapcar #'pp (sort-age (remove-if-not (lambda (s) (and (equal "K-" (subseq (reference s) 0 2)) (<= (age s) 600) (equal :20m (band (freq s))) (equal "SSB" (mode s)))) *spots*))))
-````
-
-````
-(bt:with-lock-held (*spots-lock*) (mapcar #'pp (sort-dist (filter-location "US-CO" *spots*))))
-````
-
-````
-(bt:with-lock-held (*spots-lock*) (histogram (mapcar #'location *spots*)))
-````
