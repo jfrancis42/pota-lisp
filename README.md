@@ -1,7 +1,7 @@
 # pota-lisp
 A Common Lisp library for retrieving POTA spots from the pota.app website.
 
-This library is still in development, but the basics are present. It's able to fetch current POTA spots from the (undocumented) POTA.app API and allow you to view and manipulate them in useful ways. Or at least ways that are useful to me.
+This library is still in development, but the basics are present. It's able to fetch current POTA spots from the (undocumented, but easily reverse-engineered using Chrome Developer Tools) POTA.app API and allow you to view and manipulate them in useful ways. Or at least ways that are useful to me.
 
 For example to fetch current spots and cache them for use, try this:
 

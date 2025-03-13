@@ -62,6 +62,11 @@
    (expire :accessor expire :initarg :expire :initform nil))
   (:documentation "A class to hold a POTA spot."))
 
+(defmethod locator ((s pota-spot))
+  (if (grid-6 s)
+      (grid-6 s)
+      (grid-4 s)))
+
 (defmethod point ((s pota-spot))
   "Return an aviation-formulary:2d-point object representing the location of a pota-spot."
   (make-instance '2d-point
@@ -100,11 +105,11 @@
 	      (dist s)
 	      (direction s)
 	      (deg-to-cardinal-course (direction s))
-	      (grid-6 s)
+	      (locator s)
 	      (lat s)
 	      (lon s))
       (format t "Where: ~A ~F/~F~%"
-	      (grid-6 s)
+	      (locator s)
 	      (lat s)
 	      (lon s)))
   (format t "~%"))
@@ -251,6 +256,11 @@
    (first-activator :accessor first-activator :initarg :first-activator :initform nil)
    (first-activation-date :accessor first-activation-date :initarg :first-activation-date :initform nil))
   (:documentation "A class to hold a POTA park."))
+
+(defmethod locator ((s pota-park))
+  (if (grid-6 s)
+      (grid-6 s)
+      (grid-4 s)))
 
 (defun make-pota-park (park)
   "Create a pota-park object from the returned JSON data from the pota.app API."
